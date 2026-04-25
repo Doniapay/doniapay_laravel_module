@@ -12,17 +12,15 @@ class DoniaPayController extends Controller
     }
     public function initiatePayment(Request $request)
     {
-        $rawData = [
-            "dn_su"  => route('doniapay.success'),
-            "dn_cu"  => route('doniapay.cancel'),
-            "dn_wu"  => route('doniapay.success'),
-            "dn_am"  => "100",
-            "dn_cn"  => "Customer Name",
-            "dn_ce"  => "customer@mail.com",
-            "dn_mt"  => json_encode(["order_id" => "123"]),
-            "dn_rt"  => "GET"
+        $orderInfo = [
+            "success_url" => route('doniapay.success'),
+            "cancel_url"  => route('doniapay.cancel'),
+            "amount"      => "100",
+            "name"        => "Customer Name",
+            "email"       => "customer@email.com",
+            "meta"        => json_encode(["order_id" => "123"])
         ];
-        $res = $this->payService->makePayment($rawData);
+        $res = $this->payService->makePayment($orderInfo);
         if (isset($res['status']) && $res['status'] == 1) {
             return redirect()->away($res['payment_url']);
         }
@@ -32,7 +30,7 @@ class DoniaPayController extends Controller
     {
         $trxId = $request->transactionId ?? $request->payment_id;
         $res = $this->payService->verifyPayment($trxId);
-        if ($res && ($res['status'] == 'COMPLETED' || $res['status'] == 1)) {
+        if ($res && (isset($res['status']) && ($res['status'] == 'COMPLETED' || $res['status'] == 1))) {
             return "Payment Successful! TrxID: " . $trxId;
         }
         return "Payment Verification Failed!";
